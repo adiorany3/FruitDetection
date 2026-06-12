@@ -34,3 +34,23 @@ Agar lebih kompatibel dengan `tf.keras.models.load_model`, file model disimpan s
 
 Model ini mengenali 131 kelas berdasarkan `class_labels.json`.
 Model belum dirancang khusus untuk tingkat kematangan semua buah, kecuali kelas yang memang sudah mengandung label seperti `Avocado ripe` atau `Tomato not Ripened`.
+
+
+## Customisasi Tampilan
+
+Aplikasi ini sudah menyembunyikan emblem/menu/footer bawaan Streamlit dan menambahkan footer custom:
+
+```text
+Developed by Galuh Adi Insani
+```
+
+Jika ingin mengganti nama developer, ubah bagian berikut di `app.py`:
+
+```html
+Developed by <strong>Galuh Adi Insani</strong>
+```
+
+
+## Perbaikan Kompatibilitas Streamlit
+
+Parameter `use_container_width=True` pada `st.image()` sudah diganti menjadi `use_column_width=True` agar kompatibel dengan versi Streamlit yang digunakan pada `requirements.txt`.

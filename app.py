@@ -12,6 +12,53 @@ st.set_page_config(
     layout="centered"
 )
 
+# Custom CSS: hide Streamlit default branding and add custom footer
+st.markdown(
+    """
+    <style>
+        /* Hide Streamlit default header, menu, footer, and deploy button */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        [data-testid="stToolbar"] {visibility: hidden !important;}
+        [data-testid="stDecoration"] {display: none !important;}
+        [data-testid="stStatusWidget"] {visibility: hidden !important;}
+        [data-testid="stHeader"] {display: none !important;}
+        .viewerBadge_container__1QSob {display: none !important;}
+
+        /* Reduce top blank space after hiding header */
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 5rem;
+        }
+
+        /* Custom fixed footer */
+        .custom-footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: #ffffff;
+            color: #475569;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+            z-index: 9999;
+        }
+
+        .custom-footer strong {
+            color: #f97316;
+        }
+    </style>
+
+    <div class="custom-footer">
+        Developed by <strong>Galuh Adi Insani</strong>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "model")
 
@@ -141,7 +188,7 @@ try:
 
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
-        st.image(image, caption="Gambar yang diupload", use_container_width=True)
+        st.image(image, caption="Gambar yang diupload", use_column_width=True)
 
         with st.spinner("Sedang melakukan prediksi..."):
             results = predict_image(model, image, labels, top_k=5)
