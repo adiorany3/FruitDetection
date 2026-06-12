@@ -680,8 +680,6 @@ try:
                     📌 <span>Silakan upload gambar buah terlebih dahulu.</span>
                     <div class="visible-upload-caption">
                         Pilih file gambar melalui tombol upload di atas agar sistem dapat melakukan prediksi.
-                        Jika tombol upload belum terlihat setelah deploy, lakukan refresh halaman atau klik
-                        <b>Manage App → Clear cache → Reboot app</b>.
                     </div>
                 </div>
                 """,
