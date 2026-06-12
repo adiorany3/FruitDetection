@@ -106,3 +106,17 @@ Versi ini memperbaiki kontras warna agar tulisan lebih mudah dibaca:
 - Card dibuat putih dengan border abu-abu.
 - Header tetap berwarna, tetapi memakai warna lebih gelap agar teks putih terbaca.
 - Sidebar, uploader, footer, dan badge confidence diberi warna kontras.
+
+
+## Perbaikan Upload Gambar Terlihat
+
+Versi ini memperbaiki area upload gambar agar lebih jelas:
+- Label uploader tidak lagi disembunyikan.
+- Area upload diberi border oranye kontras.
+- Tombol upload dibuat berwarna oranye dengan teks putih.
+- Ditambahkan instruksi upload yang terlihat jelas.
+
+
+## Perbaikan Teks Upload Terlihat
+
+Pesan `Silakan upload gambar buah terlebih dahulu` sudah diganti dari `st.info()` menjadi card custom dengan teks gelap dan background oranye muda agar lebih mudah terlihat.

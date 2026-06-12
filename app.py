@@ -188,6 +188,118 @@ st.markdown(
         }
 
 
+
+
+        /* Visible upload empty message */
+        .visible-upload-message {
+            background: #fff7ed !important;
+            border: 2px solid #fb923c !important;
+            border-radius: 18px !important;
+            padding: 16px 18px !important;
+            margin-top: 14px !important;
+            color: #111827 !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            line-height: 1.6 !important;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .visible-upload-message span {
+            color: #9a3412 !important;
+            font-weight: 800 !important;
+        }
+
+        .visible-upload-caption {
+            color: #334155 !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            margin-top: 8px !important;
+            line-height: 1.6 !important;
+        }
+
+        div[data-testid="stAlert"] {
+            background: #fff7ed !important;
+            color: #111827 !important;
+            border: 1px solid #fb923c !important;
+        }
+
+        div[data-testid="stAlert"] * {
+            color: #111827 !important;
+        }
+
+        /* Upload component visibility fix */
+        .upload-wrapper {
+            background: #ffffff !important;
+            border: 2px solid #ea580c !important;
+            border-radius: 22px !important;
+            padding: 20px !important;
+            margin-top: 14px !important;
+            margin-bottom: 18px !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .upload-title-visible {
+            font-size: 18px !important;
+            font-weight: 800 !important;
+            color: #9a3412 !important;
+            margin-bottom: 6px !important;
+        }
+
+        .upload-help-visible {
+            font-size: 14px !important;
+            color: #334155 !important;
+            line-height: 1.6 !important;
+            margin-bottom: 14px !important;
+        }
+
+        div[data-testid="stFileUploader"] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: #fff7ed !important;
+            color: #0f172a !important;
+            border: 2px dashed #ea580c !important;
+            border-radius: 18px !important;
+            padding: 18px !important;
+            min-height: 120px !important;
+        }
+
+        div[data-testid="stFileUploader"] * {
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: #0f172a !important;
+        }
+
+        div[data-testid="stFileUploader"] label {
+            display: block !important;
+            visibility: visible !important;
+            color: #0f172a !important;
+            font-weight: 700 !important;
+        }
+
+        div[data-testid="stFileUploaderDropzone"] {
+            background: #ffffff !important;
+            border: 1px solid #fdba74 !important;
+            border-radius: 14px !important;
+            color: #0f172a !important;
+        }
+
+        div[data-testid="stFileUploaderDropzone"] * {
+            color: #0f172a !important;
+        }
+
+        div[data-testid="stFileUploader"] button {
+            background: #ea580c !important;
+            color: #ffffff !important;
+            border: 1px solid #ea580c !important;
+            border-radius: 10px !important;
+            font-weight: 700 !important;
+        }
+
+        div[data-testid="stFileUploader"] button * {
+            color: #ffffff !important;
+        }
+
         /* Readability and contrast improvement */
         html, body, [class*="css"] {
             color: #0f172a !important;
@@ -534,10 +646,22 @@ try:
             unsafe_allow_html=True
         )
 
+        st.markdown(
+            """
+            <div class="upload-wrapper">
+                <div class="upload-title-visible">Pilih atau drag gambar buah ke sini</div>
+                <div class="upload-help-visible">
+                    Klik tombol browse/upload di bawah ini, lalu pilih file gambar buah dari perangkat kamu.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         uploaded_file = st.file_uploader(
-            "Pilih gambar buah",
+            "Upload gambar buah",
             type=["jpg", "jpeg", "png", "webp"],
-            label_visibility="collapsed"
+            help="Format yang didukung: JPG, JPEG, PNG, dan WEBP."
         )
 
         if uploaded_file is not None:
@@ -550,7 +674,19 @@ try:
 
             st.caption(f"Ukuran asli gambar: {image.size[0]} × {image.size[1]} px")
         else:
-            st.info("Silakan upload gambar buah terlebih dahulu.")
+            st.markdown(
+                """
+                <div class="visible-upload-message">
+                    📌 <span>Silakan upload gambar buah terlebih dahulu.</span>
+                    <div class="visible-upload-caption">
+                        Pilih file gambar melalui tombol upload di atas agar sistem dapat melakukan prediksi.
+                        Jika tombol upload belum terlihat setelah deploy, lakukan refresh halaman atau klik
+                        <b>Manage App → Clear cache → Reboot app</b>.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
             image = None
 
     with right_col:
