@@ -54,3 +54,24 @@ Developed by <strong>Galuh Adi Insani</strong>
 ## Perbaikan Kompatibilitas Streamlit
 
 Parameter `use_container_width=True` pada `st.image()` sudah diganti menjadi `use_column_width=True` agar kompatibel dengan versi Streamlit yang digunakan pada `requirements.txt`.
+
+
+## Perbaikan Prediksi Papaya
+
+Jika aplikasi selalu memprediksi `Papaya`, penyebab utamanya adalah preprocessing gambar yang tidak sama dengan notebook training.
+
+Notebook training disempurnakan memakai:
+
+```python
+ImageDataGenerator(rescale=1./255)
+```
+
+Maka pada `app.py`, preprocessing prediksi juga harus:
+
+```python
+img_array = np.array(image_resized).astype(np.float32)
+img_array = img_array / 255.0
+img_array = np.expand_dims(img_array, axis=0)
+```
+
+Versi ini sudah diperbaiki agar sesuai dengan preprocessing training.

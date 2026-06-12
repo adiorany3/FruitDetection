@@ -4,7 +4,6 @@ import numpy as np
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 st.set_page_config(
     page_title="Fruit Detection CNN",
@@ -131,9 +130,9 @@ def predict_image(model, image, labels, top_k=5):
 
     img_array = np.array(image_resized).astype(np.float32)
 
-    # Disamakan dengan preprocessing pada notebook training:
-    # ImageDataGenerator(preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input)
-    img_array = preprocess_input(img_array)
+    # Disamakan dengan notebook training disempurnakan:
+    # ImageDataGenerator(rescale=1./255)
+    img_array = img_array / 255.0
 
     img_array = np.expand_dims(img_array, axis=0)
 
@@ -168,6 +167,7 @@ with st.sidebar:
     st.header("Informasi Model")
     st.write("Model: CNN Conv2D + MaxPooling2D")
     st.write("Input gambar: 224 × 224 RGB")
+    st.write("Preprocessing: resize + rescale 1/255")
     st.write("Output: 131 kelas")
     st.caption(
         "Catatan: model ini fokus mengenali jenis buah/sayur. "
