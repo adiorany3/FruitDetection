@@ -87,3 +87,12 @@ Versi ini memperbaiki tampilan aplikasi dengan:
 - Footer custom `Developed by Galuh Adi Insani`
 - Penyembunyian menu/emblem bawaan Streamlit
 - Tampilan top 5 prediksi menggunakan progress bar
+
+
+## Keterangan agar Prediksi Lebih Baik
+
+Versi ini menambahkan panduan pada aplikasi:
+- Tips mengambil gambar buah agar prediksi lebih akurat.
+- Penjelasan confidence.
+- Pesan otomatis ketika confidence rendah, sedang, atau tinggi.
+- Panduan membaca hasil prediksi.

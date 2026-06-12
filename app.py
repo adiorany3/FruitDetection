@@ -133,6 +133,60 @@ st.markdown(
             line-height: 1.6;
         }
 
+
+        .tips-card {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-top: 16px;
+            margin-bottom: 18px;
+        }
+
+        .tips-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #166534;
+            margin-bottom: 8px;
+        }
+
+        .tips-list {
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.75;
+            margin-bottom: 0;
+        }
+
+        .quality-badge-good {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .quality-badge-medium {
+            background: #fef9c3;
+            color: #854d0e;
+            border: 1px solid #fde68a;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .quality-badge-low {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
         .custom-footer {
             position: fixed;
             left: 0;
@@ -273,6 +327,14 @@ def predict_image(model, image, labels, top_k=5):
     return results
 
 
+def get_confidence_message(confidence):
+    if confidence >= 80:
+        return "good", "Prediksi sangat baik. Gambar cukup sesuai dengan pola data training."
+    elif confidence >= 50:
+        return "medium", "Prediksi cukup, tetapi masih bisa ditingkatkan dengan gambar yang lebih jelas."
+    else:
+        return "low", "Prediksi kurang yakin. Coba gunakan gambar yang lebih terang, jelas, dan background lebih polos."
+
 # =========================
 # UI
 # =========================
@@ -318,6 +380,18 @@ try:
                     Format yang didukung: JPG, JPEG, PNG, dan WEBP.
                 </div>
             </div>
+
+            <div class="tips-card">
+                <div class="tips-title">✅ Tips agar prediksi lebih akurat</div>
+                <ul class="tips-list">
+                    <li>Gunakan <b>satu buah utama</b> dalam satu gambar.</li>
+                    <li>Pastikan buah berada di <b>tengah gambar</b> dan tidak terpotong.</li>
+                    <li>Gunakan <b>pencahayaan terang</b>, tetapi hindari bayangan terlalu gelap.</li>
+                    <li>Gunakan <b>background polos</b> atau tidak terlalu ramai.</li>
+                    <li>Hindari gambar buram, terlalu jauh, terlalu dekat, atau tertutup objek lain.</li>
+                    <li>Gunakan gambar buah yang termasuk dalam daftar kelas model.</li>
+                </ul>
+            </div>
             """,
             unsafe_allow_html=True
         )
@@ -359,12 +433,15 @@ try:
                 results = predict_image(model, image, labels, top_k=5)
 
             best = results[0]
+            quality_level, quality_message = get_confidence_message(best["confidence"])
+            badge_class = f"quality-badge-{quality_level}"
 
             st.markdown(
                 f"""
                 <div class="result-card">
                     <div class="prediction-caption">Prediksi utama</div>
                     <div class="prediction-label">{best['label']}</div>
+                    <div class="{badge_class}">{quality_message}</div>
                     <div class="confidence-box">
                         <div class="confidence-number">{best['confidence']:.2f}%</div>
                         <div class="confidence-text">Confidence</div>
@@ -376,8 +453,13 @@ try:
 
             if best["confidence"] < 50:
                 st.warning(
-                    "Confidence masih rendah. Coba gunakan gambar dengan pencahayaan lebih baik "
-                    "dan objek buah yang lebih jelas."
+                    "Confidence masih rendah. Coba foto ulang dengan pencahayaan lebih terang, "
+                    "buah berada di tengah, background polos, dan gambar tidak buram."
+                )
+            elif best["confidence"] < 80:
+                st.info(
+                    "Prediksi sudah cukup, tetapi hasil bisa lebih baik jika gambar lebih dekat, "
+                    "buah tidak tertutup objek lain, dan background lebih bersih."
                 )
 
             st.markdown("### Top 5 Prediksi")
@@ -399,6 +481,19 @@ try:
                 """,
                 unsafe_allow_html=True
             )
+
+    with st.expander("Panduan membaca hasil prediksi"):
+        st.write(
+            """
+            **Confidence** menunjukkan tingkat keyakinan model terhadap hasil prediksi.
+            Nilai confidence yang tinggi biasanya menunjukkan gambar lebih sesuai dengan pola data training.
+
+            Agar hasil lebih baik, gunakan gambar yang mirip dengan data training, yaitu buah terlihat jelas,
+            satu objek utama, pencahayaan cukup, dan background tidak terlalu ramai.
+            Jika confidence rendah, jangan langsung dianggap salah total. Coba upload gambar lain dengan sudut,
+            jarak, atau pencahayaan yang lebih baik.
+            """
+        )
 
     with st.expander("Lihat daftar 131 kelas yang dapat dikenali"):
         ordered_labels = [labels[i] for i in sorted(labels.keys())]
