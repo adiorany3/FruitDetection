@@ -96,3 +96,13 @@ Versi ini menambahkan panduan pada aplikasi:
 - Penjelasan confidence.
 - Pesan otomatis ketika confidence rendah, sedang, atau tinggi.
 - Panduan membaca hasil prediksi.
+
+
+## Perbaikan Keterbacaan Warna
+
+Versi ini memperbaiki kontras warna agar tulisan lebih mudah dibaca:
+- Background utama dibuat terang dan netral.
+- Teks utama dibuat gelap.
+- Card dibuat putih dengan border abu-abu.
+- Header tetap berwarna, tetapi memakai warna lebih gelap agar teks putih terbaca.
+- Sidebar, uploader, footer, dan badge confidence diberi warna kontras.

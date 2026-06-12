@@ -187,6 +187,143 @@ st.markdown(
             margin-bottom: 12px;
         }
 
+
+        /* Readability and contrast improvement */
+        html, body, [class*="css"] {
+            color: #0f172a !important;
+        }
+
+        .stApp {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffffff 50%, #ecfdf5 100%) !important;
+            color: #0f172a !important;
+        }
+
+        .main {
+            background: transparent !important;
+            color: #0f172a !important;
+        }
+
+        p, li, span, label, div {
+            color: inherit;
+        }
+
+        .soft-card,
+        .result-card,
+        .image-frame {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10) !important;
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, #9a3412 0%, #ea580c 48%, #166534 100%) !important;
+            color: #ffffff !important;
+        }
+
+        .hero-card,
+        .hero-card div {
+            color: #ffffff !important;
+        }
+
+        .hero-subtitle {
+            color: #fff7ed !important;
+        }
+
+        .section-title {
+            color: #111827 !important;
+        }
+
+        .small-muted,
+        .prediction-caption {
+            color: #475569 !important;
+        }
+
+        .prediction-label {
+            color: #c2410c !important;
+        }
+
+        .confidence-box {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+
+        .confidence-number {
+            color: #15803d !important;
+        }
+
+        .confidence-text {
+            color: #475569 !important;
+        }
+
+        .tips-card {
+            background: #ecfdf5 !important;
+            color: #0f172a !important;
+            border: 1px solid #86efac !important;
+        }
+
+        .tips-title {
+            color: #14532d !important;
+        }
+
+        .tips-list,
+        .tips-list li {
+            color: #1f2937 !important;
+        }
+
+        .quality-badge-good {
+            background: #dcfce7 !important;
+            color: #14532d !important;
+            border: 1px solid #22c55e !important;
+        }
+
+        .quality-badge-medium {
+            background: #fef3c7 !important;
+            color: #78350f !important;
+            border: 1px solid #f59e0b !important;
+        }
+
+        .quality-badge-low {
+            background: #fee2e2 !important;
+            color: #7f1d1d !important;
+            border: 1px solid #ef4444 !important;
+        }
+
+        div[data-testid="stFileUploader"] {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 2px dashed #ea580c !important;
+        }
+
+        div[data-testid="stFileUploader"] * {
+            color: #0f172a !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border-right: 1px solid #e2e8f0 !important;
+        }
+
+        section[data-testid="stSidebar"] * {
+            color: #0f172a !important;
+        }
+
+        .custom-footer {
+            background-color: #ffffff !important;
+            color: #334155 !important;
+            border-top: 1px solid #cbd5e1 !important;
+        }
+
+        .custom-footer strong {
+            color: #c2410c !important;
+        }
+
+        .stAlert {
+            color: #0f172a !important;
+        }
+
         .custom-footer {
             position: fixed;
             left: 0;
@@ -362,6 +499,7 @@ try:
         st.write("**Preprocessing:** resize + rescale 1/255")
         st.write("**Jumlah kelas:** 131")
         st.caption(f"Model aktif: {os.path.basename(loaded_model_path)}")
+        st.caption("Tampilan menggunakan warna kontras agar teks mudah dibaca.")
         st.divider()
         st.caption(
             "Catatan: model ini fokus mengenali jenis buah/sayur. "
