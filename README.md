@@ -75,3 +75,15 @@ img_array = np.expand_dims(img_array, axis=0)
 ```
 
 Versi ini sudah diperbaiki agar sesuai dengan preprocessing training.
+
+
+## Perbaikan Desain dan Resize Gambar
+
+Versi ini memperbaiki tampilan aplikasi dengan:
+- Layout `wide`
+- Header gradient
+- Card untuk upload dan hasil prediksi
+- Preview gambar dengan ukuran maksimal 420 × 420 px
+- Footer custom `Developed by Galuh Adi Insani`
+- Penyembunyian menu/emblem bawaan Streamlit
+- Tampilan top 5 prediksi menggunakan progress bar

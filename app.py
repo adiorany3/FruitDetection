@@ -8,14 +8,16 @@ from PIL import Image
 st.set_page_config(
     page_title="Fruit Detection CNN",
     page_icon="🍎",
-    layout="centered"
+    layout="wide"
 )
 
-# Custom CSS: hide Streamlit default branding and add custom footer
+# =========================
+# Custom CSS
+# =========================
 st.markdown(
     """
     <style>
-        /* Hide Streamlit default header, menu, footer, and deploy button */
+        /* Hide Streamlit default branding */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
@@ -25,13 +27,112 @@ st.markdown(
         [data-testid="stHeader"] {display: none !important;}
         .viewerBadge_container__1QSob {display: none !important;}
 
-        /* Reduce top blank space after hiding header */
         .block-container {
             padding-top: 2rem;
             padding-bottom: 5rem;
+            max-width: 1180px;
         }
 
-        /* Custom fixed footer */
+        .main {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffffff 45%, #f0fdf4 100%);
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, #f97316 0%, #fb923c 45%, #22c55e 100%);
+            border-radius: 28px;
+            padding: 34px 36px;
+            color: white;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+            margin-bottom: 24px;
+        }
+
+        .hero-title {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 10px;
+        }
+
+        .hero-subtitle {
+            font-size: 17px;
+            opacity: 0.96;
+            max-width: 760px;
+            line-height: 1.6;
+        }
+
+        .soft-card {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid #fed7aa;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+            margin-bottom: 18px;
+        }
+
+        .result-card {
+            background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+            border: 1px solid #fdba74;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+            margin-bottom: 18px;
+        }
+
+        .prediction-label {
+            font-size: 34px;
+            font-weight: 800;
+            color: #ea580c;
+            margin-bottom: 4px;
+        }
+
+        .prediction-caption {
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .confidence-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .confidence-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: #16a34a;
+            margin-bottom: 2px;
+        }
+
+        .confidence-text {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .image-frame {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .small-muted {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
         .custom-footer {
             position: fixed;
             left: 0;
@@ -48,6 +149,17 @@ st.markdown(
 
         .custom-footer strong {
             color: #f97316;
+        }
+
+        div[data-testid="stFileUploader"] {
+            background: #fff7ed;
+            border: 1.5px dashed #fb923c;
+            padding: 18px;
+            border-radius: 20px;
+        }
+
+        .stProgress > div > div > div > div {
+            background: linear-gradient(90deg, #f97316, #22c55e);
         }
     </style>
 
@@ -101,15 +213,10 @@ def load_labels():
     with open(LABEL_PATH, "r", encoding="utf-8") as f:
         labels = json.load(f)
 
-    # class_labels.json menggunakan key string: {"0": "Apple", "1": "..."}
     return {int(k): v for k, v in labels.items()}
 
 
 def get_model_image_size(model):
-    """
-    Mengambil ukuran input dari model.
-    Jika tidak terbaca, gunakan default 224x224 sesuai notebook training.
-    """
     try:
         input_shape = model.input_shape
         height = int(input_shape[1])
@@ -122,6 +229,16 @@ def get_model_image_size(model):
     return 224, 224
 
 
+def make_display_image(image, max_size=(420, 420)):
+    """
+    Resize gambar hanya untuk tampilan.
+    Gambar prediksi tetap diproses sesuai input model.
+    """
+    display_image = image.convert("RGB").copy()
+    display_image.thumbnail(max_size)
+    return display_image
+
+
 def predict_image(model, image, labels, top_k=5):
     height, width = get_model_image_size(model)
 
@@ -130,10 +247,9 @@ def predict_image(model, image, labels, top_k=5):
 
     img_array = np.array(image_resized).astype(np.float32)
 
-    # Disamakan dengan notebook training disempurnakan:
+    # Disamakan dengan notebook training:
     # ImageDataGenerator(rescale=1./255)
     img_array = img_array / 255.0
-
     img_array = np.expand_dims(img_array, axis=0)
 
     prediction = model.predict(img_array, verbose=0)
@@ -157,63 +273,134 @@ def predict_image(model, image, labels, top_k=5):
     return results
 
 
-st.title("🍎 Fruit Detection Using CNN")
-st.write(
-    "Aplikasi ini menggunakan model CNN hasil training Kaggle untuk mengenali jenis buah "
-    "berdasarkan gambar yang diunggah."
+# =========================
+# UI
+# =========================
+st.markdown(
+    """
+    <div class="hero-card">
+        <div class="hero-title">🍎 Fruit Detection Using CNN</div>
+        <div class="hero-subtitle">
+            Upload gambar buah, lalu sistem akan mengenali jenis buah menggunakan model CNN
+            hasil training Kaggle. Tampilan gambar dibuat lebih rapi dengan ukuran preview yang konsisten.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
-
-with st.sidebar:
-    st.header("Informasi Model")
-    st.write("Model: CNN Conv2D + MaxPooling2D")
-    st.write("Input gambar: 224 × 224 RGB")
-    st.write("Preprocessing: resize + rescale 1/255")
-    st.write("Output: 131 kelas")
-    st.caption(
-        "Catatan: model ini fokus mengenali jenis buah/sayur. "
-        "Penentuan tingkat kematangan hanya bisa dilakukan jika kelas pada dataset memang memiliki label kematangan."
-    )
 
 try:
     model, loaded_model_path = load_cnn_model()
     labels = load_labels()
 
-    st.success("Model berhasil dimuat.")
-    st.caption(f"File model aktif: `{os.path.basename(loaded_model_path)}`")
+    with st.sidebar:
+        st.markdown("### 🍊 Informasi Model")
+        st.write("**Model:** CNN Conv2D + MaxPooling2D")
+        st.write("**Input:** 224 × 224 RGB")
+        st.write("**Preprocessing:** resize + rescale 1/255")
+        st.write("**Jumlah kelas:** 131")
+        st.caption(f"Model aktif: {os.path.basename(loaded_model_path)}")
+        st.divider()
+        st.caption(
+            "Catatan: model ini fokus mengenali jenis buah/sayur. "
+            "Tingkat kematangan hanya dapat dikenali jika label tersebut tersedia pada dataset."
+        )
 
-    uploaded_file = st.file_uploader(
-        "Upload gambar buah",
-        type=["jpg", "jpeg", "png", "webp"]
-    )
+    left_col, right_col = st.columns([1.05, 1], gap="large")
 
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Gambar yang diupload", use_column_width=True)
+    with left_col:
+        st.markdown(
+            """
+            <div class="soft-card">
+                <div class="section-title">📤 Upload Gambar</div>
+                <div class="small-muted">
+                    Gunakan gambar yang jelas, pencahayaan cukup, dan objek buah berada di tengah gambar.
+                    Format yang didukung: JPG, JPEG, PNG, dan WEBP.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        with st.spinner("Sedang melakukan prediksi..."):
-            results = predict_image(model, image, labels, top_k=5)
+        uploaded_file = st.file_uploader(
+            "Pilih gambar buah",
+            type=["jpg", "jpeg", "png", "webp"],
+            label_visibility="collapsed"
+        )
 
-        best = results[0]
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file).convert("RGB")
+            display_image = make_display_image(image, max_size=(420, 420))
 
-        st.subheader("Hasil Prediksi")
-        st.success(f"Prediksi utama: {best['label']}")
-        st.metric("Confidence", f"{best['confidence']:.2f}%")
+            st.markdown('<div class="image-frame">', unsafe_allow_html=True)
+            st.image(display_image, caption="Preview gambar", width=420)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        if best["confidence"] < 50:
-            st.warning(
-                "Confidence masih rendah. Coba gunakan gambar yang lebih jelas, "
-                "pencahayaan cukup, dan objek buah berada di tengah gambar."
+            st.caption(f"Ukuran asli gambar: {image.size[0]} × {image.size[1]} px")
+        else:
+            st.info("Silakan upload gambar buah terlebih dahulu.")
+            image = None
+
+    with right_col:
+        st.markdown(
+            """
+            <div class="soft-card">
+                <div class="section-title">🔍 Hasil Analisis</div>
+                <div class="small-muted">
+                    Hasil prediksi utama dan lima kemungkinan kelas tertinggi akan muncul di bagian ini.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if uploaded_file is not None and image is not None:
+            with st.spinner("Sedang melakukan prediksi..."):
+                results = predict_image(model, image, labels, top_k=5)
+
+            best = results[0]
+
+            st.markdown(
+                f"""
+                <div class="result-card">
+                    <div class="prediction-caption">Prediksi utama</div>
+                    <div class="prediction-label">{best['label']}</div>
+                    <div class="confidence-box">
+                        <div class="confidence-number">{best['confidence']:.2f}%</div>
+                        <div class="confidence-text">Confidence</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
-        st.subheader("Top 5 Prediksi")
-        for item in results:
-            st.write(f"**{item['label']}** — {item['confidence']:.2f}%")
-            st.progress(min(item["confidence"] / 100, 1.0))
+            if best["confidence"] < 50:
+                st.warning(
+                    "Confidence masih rendah. Coba gunakan gambar dengan pencahayaan lebih baik "
+                    "dan objek buah yang lebih jelas."
+                )
 
-    else:
-        st.info("Silakan upload gambar buah terlebih dahulu.")
+            st.markdown("### Top 5 Prediksi")
+            for item in results:
+                st.write(f"**{item['label']}**")
+                st.progress(min(item["confidence"] / 100, 1.0))
+                st.caption(f"{item['confidence']:.2f}%")
 
-    with st.expander("Daftar kelas yang dapat dikenali model"):
+        else:
+            st.markdown(
+                """
+                <div class="result-card">
+                    <div class="prediction-caption">Belum ada gambar</div>
+                    <div class="prediction-label">Upload gambar dulu</div>
+                    <div class="small-muted">
+                        Setelah gambar diupload, hasil prediksi akan tampil otomatis di sini.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    with st.expander("Lihat daftar 131 kelas yang dapat dikenali"):
         ordered_labels = [labels[i] for i in sorted(labels.keys())]
         st.write(", ".join(ordered_labels))
 
