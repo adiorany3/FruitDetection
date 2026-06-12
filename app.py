@@ -1,205 +1,179 @@
+import os
 import json
-from pathlib import Path
-from typing import Dict, List, Tuple
-
 import numpy as np
 import streamlit as st
-from PIL import Image
 import tensorflow as tf
+from PIL import Image
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
-# ============================================================
-# Konfigurasi dasar
-# ============================================================
-APP_TITLE = "Fruit Recognition CNN"
-IMAGE_SIZE = (224, 224)  # mengikuti notebook training: img_size=(224, 224)
-MODEL_DIR = Path("model")
+st.set_page_config(
+    page_title="Fruit Detection CNN",
+    page_icon="🍎",
+    layout="centered"
+)
 
-MODEL_PATTERNS = [
-    "*.keras",
-    "*.h5",
-    "*.hdf5",
-]
-LABEL_CANDIDATES = [
-    MODEL_DIR / "class_labels.json",
-    MODEL_DIR / "labels.json",
-    MODEL_DIR / "label_map.json",
-    Path("class_labels.json"),
-    Path("labels.json"),
-    Path("label_map.json"),
-]
-TXT_LABEL_CANDIDATES = [
-    MODEL_DIR / "labels.txt",
-    Path("labels.txt"),
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(BASE_DIR, "model")
+
+MODEL_CANDIDATES = [
+    os.path.join(MODEL_DIR, "fruit_cnn_best_model.h5"),
+    os.path.join(MODEL_DIR, "fruit_cnn_model.h5"),
+    os.path.join(MODEL_DIR, "fruit_cnn_best_model.keras"),
+    os.path.join(MODEL_DIR, "fruit_cnn_model.keras"),
 ]
 
-
-# ============================================================
-# Helper loading model dan label
-# ============================================================
-def find_model_file() -> Path | None:
-    """Cari file model Keras di folder model/ atau root project."""
-    candidates: List[Path] = []
-    for base in [MODEL_DIR, Path(".")]:
-        for pattern in MODEL_PATTERNS:
-            candidates.extend(base.glob(pattern))
-
-    # Prioritaskan format .keras, lalu .h5/.hdf5
-    candidates = sorted(
-        set(candidates),
-        key=lambda p: (0 if p.suffix == ".keras" else 1, str(p).lower()),
-    )
-    return candidates[0] if candidates else None
+LABEL_PATH = os.path.join(MODEL_DIR, "class_labels.json")
 
 
-@st.cache_resource(show_spinner="Memuat model...")
-def load_model(model_path: str):
-    return tf.keras.models.load_model(model_path)
+@st.cache_resource
+def load_cnn_model():
+    last_error = None
 
+    for model_path in MODEL_CANDIDATES:
+        if os.path.exists(model_path):
+            try:
+                model = tf.keras.models.load_model(model_path, compile=False)
+                return model, model_path
+            except Exception as e:
+                last_error = e
 
-def normalize_label_mapping(data) -> Dict[int, str]:
-    """Terima berbagai format label dan ubah menjadi {index:int -> label:str}."""
-    if isinstance(data, list):
-        return {idx: str(label) for idx, label in enumerate(data)}
+    if last_error is not None:
+        raise RuntimeError(f"Model ditemukan, tetapi gagal dimuat: {last_error}")
 
-    if isinstance(data, dict):
-        # Format yang disarankan: {"0": "Apple", "1": "Banana"}
-        if all(str(k).isdigit() for k in data.keys()):
-            return {int(k): str(v) for k, v in data.items()}
-
-        # Format alternatif dari generator: {"Apple": 0, "Banana": 1}
-        if all(str(v).isdigit() for v in data.values()):
-            return {int(v): str(k) for k, v in data.items()}
-
-    raise ValueError(
-        "Format label tidak dikenali. Gunakan class_labels.json dengan format "
-        '{"0": "nama_kelas", "1": "nama_kelas"} atau {"nama_kelas": 0}.'
+    raise FileNotFoundError(
+        "File model tidak ditemukan. Pastikan file model berada di folder model/."
     )
 
 
-def load_labels() -> Dict[int, str] | None:
-    for label_path in LABEL_CANDIDATES:
-        if label_path.exists():
-            with open(label_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return normalize_label_mapping(data)
+@st.cache_data
+def load_labels():
+    if not os.path.exists(LABEL_PATH):
+        raise FileNotFoundError(
+            "File class_labels.json tidak ditemukan di folder model/."
+        )
 
-    for label_path in TXT_LABEL_CANDIDATES:
-        if label_path.exists():
-            labels = [line.strip() for line in label_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-            return {idx: label for idx, label in enumerate(labels)}
+    with open(LABEL_PATH, "r", encoding="utf-8") as f:
+        labels = json.load(f)
 
-    return None
-
-
-def preprocess_image(image: Image.Image) -> np.ndarray:
-    """Preprocessing mengikuti notebook: MobileNetV2 preprocess_input + resize 224x224."""
-    image = image.convert("RGB").resize(IMAGE_SIZE)
-    arr = np.array(image).astype(np.float32)
-    arr = np.expand_dims(arr, axis=0)
-    arr = tf.keras.applications.mobilenet_v2.preprocess_input(arr)
-    return arr
+    # class_labels.json menggunakan key string: {"0": "Apple", "1": "..."}
+    return {int(k): v for k, v in labels.items()}
 
 
-def predict_image(model, labels: Dict[int, str], image: Image.Image, top_k: int = 5) -> List[Tuple[str, float]]:
-    arr = preprocess_image(image)
-    preds = model.predict(arr, verbose=0)[0]
+def get_model_image_size(model):
+    """
+    Mengambil ukuran input dari model.
+    Jika tidak terbaca, gunakan default 224x224 sesuai notebook training.
+    """
+    try:
+        input_shape = model.input_shape
+        height = int(input_shape[1])
+        width = int(input_shape[2])
+        if height > 0 and width > 0:
+            return height, width
+    except Exception:
+        pass
 
-    top_indices = np.argsort(preds)[::-1][:top_k]
-    results: List[Tuple[str, float]] = []
+    return 224, 224
+
+
+def predict_image(model, image, labels, top_k=5):
+    height, width = get_model_image_size(model)
+
+    image = image.convert("RGB")
+    image_resized = image.resize((width, height))
+
+    img_array = np.array(image_resized).astype(np.float32)
+
+    # Disamakan dengan preprocessing pada notebook training:
+    # ImageDataGenerator(preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input)
+    img_array = preprocess_input(img_array)
+
+    img_array = np.expand_dims(img_array, axis=0)
+
+    prediction = model.predict(img_array, verbose=0)
+    prediction = np.array(prediction)
+
+    if prediction.ndim == 2:
+        prediction = prediction[0]
+
+    top_indices = prediction.argsort()[-top_k:][::-1]
+
+    results = []
     for idx in top_indices:
         label = labels.get(int(idx), f"Kelas {idx}")
-        confidence = float(preds[idx]) * 100
-        results.append((label, confidence))
+        confidence = float(prediction[idx]) * 100
+        results.append({
+            "index": int(idx),
+            "label": label,
+            "confidence": confidence
+        })
+
     return results
 
 
-# ============================================================
-# Tampilan Streamlit
-# ============================================================
-st.set_page_config(
-    page_title=APP_TITLE,
-    page_icon="🍎",
-    layout="centered",
-)
-
-st.title("🍎 Fruit Recognition Using CNN")
+st.title("🍎 Fruit Detection Using CNN")
 st.write(
-    "Aplikasi ini menggunakan model CNN hasil training dari Kaggle untuk mengenali jenis buah "
+    "Aplikasi ini menggunakan model CNN hasil training Kaggle untuk mengenali jenis buah "
     "berdasarkan gambar yang diunggah."
 )
 
-with st.expander("Panduan file model", expanded=False):
-    st.markdown(
-        """
-        Letakkan file hasil output Kaggle ke folder `model/`:
-
-        ```text
-        model/
-        ├── fruit_cnn_model.keras   # atau .h5/.hdf5
-        └── class_labels.json       # daftar label kelas
-        ```
-
-        Contoh format `class_labels.json`:
-
-        ```json
-        {
-          "0": "Apple",
-          "1": "Banana",
-          "2": "Orange"
-        }
-        ```
-
-        Jika output Kaggle hanya berisi `test_submission.csv`, model belum bisa dipakai untuk prediksi online.
-        Notebook training harus menyimpan model dengan `model.save(...)` terlebih dahulu.
-        """
+with st.sidebar:
+    st.header("Informasi Model")
+    st.write("Model: CNN Conv2D + MaxPooling2D")
+    st.write("Input gambar: 224 × 224 RGB")
+    st.write("Output: 131 kelas")
+    st.caption(
+        "Catatan: model ini fokus mengenali jenis buah/sayur. "
+        "Penentuan tingkat kematangan hanya bisa dilakukan jika kelas pada dataset memang memiliki label kematangan."
     )
 
-model_path = find_model_file()
-labels = load_labels()
-
-if model_path is None:
-    st.error("File model belum ditemukan. Letakkan file `.keras`, `.h5`, atau `.hdf5` di folder `model/`.")
-    st.stop()
-
-if labels is None:
-    st.error("File label belum ditemukan. Letakkan `class_labels.json` atau `labels.txt` di folder `model/`.")
-    st.stop()
-
 try:
-    model = load_model(str(model_path))
+    model, loaded_model_path = load_cnn_model()
+    labels = load_labels()
+
+    st.success("Model berhasil dimuat.")
+    st.caption(f"File model aktif: `{os.path.basename(loaded_model_path)}`")
+
+    uploaded_file = st.file_uploader(
+        "Upload gambar buah",
+        type=["jpg", "jpeg", "png", "webp"]
+    )
+
+    if uploaded_file is not None:
+        image = Image.open(uploaded_file)
+        st.image(image, caption="Gambar yang diupload", use_container_width=True)
+
+        with st.spinner("Sedang melakukan prediksi..."):
+            results = predict_image(model, image, labels, top_k=5)
+
+        best = results[0]
+
+        st.subheader("Hasil Prediksi")
+        st.success(f"Prediksi utama: {best['label']}")
+        st.metric("Confidence", f"{best['confidence']:.2f}%")
+
+        if best["confidence"] < 50:
+            st.warning(
+                "Confidence masih rendah. Coba gunakan gambar yang lebih jelas, "
+                "pencahayaan cukup, dan objek buah berada di tengah gambar."
+            )
+
+        st.subheader("Top 5 Prediksi")
+        for item in results:
+            st.write(f"**{item['label']}** — {item['confidence']:.2f}%")
+            st.progress(min(item["confidence"] / 100, 1.0))
+
+    else:
+        st.info("Silakan upload gambar buah terlebih dahulu.")
+
+    with st.expander("Daftar kelas yang dapat dikenali model"):
+        ordered_labels = [labels[i] for i in sorted(labels.keys())]
+        st.write(", ".join(ordered_labels))
+
 except Exception as e:
-    st.error("Model gagal dimuat. Pastikan file model tidak rusak dan versi TensorFlow sesuai.")
+    st.error("Aplikasi gagal memuat model atau label.")
     st.exception(e)
-    st.stop()
-
-st.success(f"Model berhasil dimuat: `{model_path}`")
-st.caption(f"Jumlah label: {len(labels)} kelas")
-
-uploaded_file = st.file_uploader(
-    "Upload gambar buah",
-    type=["jpg", "jpeg", "png", "webp"],
-)
-
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Gambar yang diunggah", use_container_width=True)
-
-    with st.spinner("Melakukan prediksi..."):
-        results = predict_image(model, labels, image, top_k=min(5, len(labels)))
-
-    best_label, best_confidence = results[0]
-    st.subheader("Hasil Prediksi")
-    st.success(f"{best_label} — {best_confidence:.2f}%")
-
-    st.write("Top prediksi:")
-    chart_data = {
-        "Label": [label for label, _ in results],
-        "Confidence (%)": [round(conf, 2) for _, conf in results],
-    }
-    st.dataframe(chart_data, use_container_width=True, hide_index=True)
-    st.bar_chart(chart_data, x="Label", y="Confidence (%)")
-
-st.info(
-    "Catatan: aplikasi ini mengenali jenis buah. Untuk mendeteksi tingkat kematangan, "
-    "model harus dilatih ulang memakai dataset berlabel kematangan seperti mentah, setengah matang, matang, dan busuk."
-)
+    st.info(
+        "Pastikan struktur folder benar: app.py, requirements.txt, runtime.txt, "
+        "dan folder model/ yang berisi file model serta class_labels.json."
+    )

@@ -1,94 +1,36 @@
-# Fruit Recognition CNN - Streamlit Online
+# Fruit Detection Using CNN - Streamlit Online
 
-Project ini adalah aplikasi Streamlit untuk menjalankan model CNN pengenalan buah hasil training dari Kaggle.
+Project ini berisi aplikasi Streamlit untuk mengenali jenis buah menggunakan model CNN hasil training Kaggle.
 
-## 1. Download output model dari Kaggle
-
-Jalankan perintah berikut di terminal lokal:
-
-```bash
-kaggle kernels output adioranye/fruits-recognition-using-cnn-by-galuh-adi-insani -p model
-```
-
-Perintah tersebut akan mengunduh output kernel Kaggle ke folder `model/`.
-
-## 2. File yang wajib ada
-
-Agar aplikasi bisa melakukan prediksi, folder `model/` harus berisi minimal:
+## Struktur Folder
 
 ```text
-model/
-├── fruit_cnn_model.keras   # atau file .h5 / .hdf5
-└── class_labels.json       # label kelas
+fruitdetection/
+├── app.py
+├── requirements.txt
+├── runtime.txt
+├── .streamlit/
+│   └── config.toml
+└── model/
+    ├── fruit_cnn_best_model.h5
+    ├── fruit_cnn_model.h5
+    └── class_labels.json
 ```
 
-Jika output Kaggle hanya berisi `test_submission.csv`, maka model belum bisa dipakai untuk Streamlit. Notebook training harus menyimpan model terlebih dahulu.
+## Cara Deploy ke Streamlit Community Cloud
 
-Tambahkan cell ini di akhir notebook training Kaggle:
+1. Upload semua file ke repository GitHub.
+2. Buka Streamlit Community Cloud.
+3. Pilih repository.
+4. Main file path: `app.py`.
+5. Deploy.
 
-```python
-import json
+Jika sebelumnya pernah error dependency, buka **Manage App**, lalu pilih **Clear cache** dan **Reboot app**.
 
-# Simpan model
-model.save('/kaggle/working/fruit_cnn_model.keras')
+## Catatan Penting
 
-# Simpan label kelas dari generator training
-label_map = {v: k for k, v in x_train.class_indices.items()}
-with open('/kaggle/working/class_labels.json', 'w') as f:
-    json.dump(label_map, f)
-```
+File model dari Kaggle awalnya bernama `.keras`, tetapi format internalnya adalah HDF5. 
+Agar lebih kompatibel dengan `tf.keras.models.load_model`, file model disimpan sebagai `.h5`.
 
-Setelah itu jalankan ulang notebook, lalu download ulang output Kaggle.
-
-## 3. Jalankan lokal
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-## 4. Deploy ke Streamlit Community Cloud
-
-1. Upload semua file project ini ke GitHub.
-2. Pastikan file model dan `class_labels.json` ikut masuk ke repository atau disediakan melalui mekanisme hosting lain.
-3. Buka Streamlit Community Cloud.
-4. Pilih repository GitHub.
-5. Set main file path menjadi:
-
-```text
-app.py
-```
-
-6. Klik Deploy.
-
-## 5. Catatan penting
-
-Aplikasi ini mengikuti preprocessing dari notebook training, yaitu:
-
-```python
-tf.keras.applications.mobilenet_v2.preprocess_input
-```
-
-dengan ukuran gambar:
-
-```text
-224 x 224 pixel
-```
-
-Untuk mendeteksi tingkat kematangan buah, dataset dan model harus dilatih ulang dengan label seperti:
-
-```text
-mentah
-setengah_matang
-matang
-busuk
-```
-
-atau label gabungan seperti:
-
-```text
-pisang_mentah
-pisang_matang
-apel_mentah
-apel_matang
-```
+Model ini mengenali 131 kelas berdasarkan `class_labels.json`.
+Model belum dirancang khusus untuk tingkat kematangan semua buah, kecuali kelas yang memang sudah mengandung label seperti `Avocado ripe` atau `Tomato not Ripened`.
